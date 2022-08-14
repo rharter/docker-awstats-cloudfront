@@ -24,11 +24,12 @@ The following environment variables are used in addition the the standard s6 ove
 
 | Variable | Description |
 | --- | --- |
+| AWSTATS_HOSTNAME | The hostname of the site for which stats should be generated. |
 | BUCKET | The S3 bucket to which CloudFront writes it's logs. |
 | AWS_ACCESS_KEY_ID | The AWS Access Key Id with read permissions for the log bucket. Alternatively, you can use a config file based credentials in `/config/.aws/credentials`. |
 | AWS_SECRET_ACCESS_KEY | The AWS Secret Access Key paired with the id. Alternatively, you can use a config file based credentials in `/config/.aws/credentials`. |
 | CRON | (Optional) The cron schedule to sync. If missing, the container will perform a one time sync on launch. |
-| GOACCESS_ARGS | (Optional) Additional arguments to add to the goaccess command. |
+| AWSTATS_ARGS | (Optional) Additional arguments to add to the goaccess command. |
 | HTML_FILENAME | (Optional) The name of the html file to generate (without the extension). This can be used to generate analytics reports for multiple sites. |
 | NO_SERVER | (Optional) If this variable is set then the nginx server won't be started in this container. |
 | PRUNE | (Optional) If set, log files older than the specified number of days will be deleted from S3 |
@@ -39,7 +40,7 @@ If you specify a `POST_ACTION` script, it will receive the generated analytics H
 
 ### Volumes
 
-The container uses two volumes, `/logs` and `/config`.  Synced log files will be stored in the volume mounted at `/logs`.  A customizable `nginx.conf` file will be written to `/config`, and the resulting analytics report will be written to an html file in `/config/html`.
+The container uses three volumes: `/logs`, `/config`, and `/output`.  Synced log files will be stored in the volume mounted at `/logs`.  A customizable `nginx.conf` file will be written to `/config`, and the resulting analytics report will be written to an html file in `/output`.
 
 ## Examples
 
@@ -57,9 +58,11 @@ docker run \
   -e "AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}" \
   -e "BUCKET=my-access-logs" \
   -e "NO_SERVER=1" \
-  -e "PRUNE=60"
+  -e "PRUNE=60" \
+  -e "AWSTATS_HOSTNAME=example.com" \
   -v "/tmp/goaccess-cloudfront/logs:/logs:rw" \
   -v "/tmp/goaccess-cloudfront:/config:rw" \
+  -v "/tmp/goaccess-cloudfront/html:/output:rw" \
   rharter/goaccess-cloudfront
 ```
 
@@ -87,6 +90,7 @@ By adding the following configuration to a Docker Compose `yaml` file, the conta
     volumes:
       - ${USERDIR}/docker/analytics/logs:/logs:rw
       - ${USERDIR}/docker/analytics:/config:rw
+      - ${USERDIR}/docker/analytics/html:/output:rw
 ```
 
 ### Multiple Sites with Docker Compose
@@ -111,6 +115,7 @@ To generate analytics for multiple sites that are served by a single service, ru
     volumes:
       - ${USERDIR}/docker/analytics/logs/foo.com:/logs:rw
       - ${USERDIR}/docker/analytics:/config:rw
+      - ${USERDIR}/docker/analytics/html/foo.com:/output:rw
       
   analytics-main:
     container_name: analytics-main
@@ -130,6 +135,7 @@ To generate analytics for multiple sites that are served by a single service, ru
     volumes:
       - ${USERDIR}/docker/analytics/logs/ryanharter.com:/logs:rw
       - ${USERDIR}/docker/analytics:/config:rw
+      - ${USERDIR}/docker/analytics/html/ryanharter:/output:rw
 ```
 
 Analytics for `foo.com` will be available on the host at `http://server.address/foo.html`, and analytics for `ryanharter.com` will be available at `http://server.address/ryanharter.html`.  By placing a custom file at `${USERDIR}/docker/analytics/index.html`, you can have a landing page that directs users to your other analytics reports.
@@ -139,4 +145,3 @@ Analytics for `foo.com` will be available on the host at `http://server.address/
 MIT. See `LICENSE.txt`
 
     Copyright 2020 Ryan Harter
-
