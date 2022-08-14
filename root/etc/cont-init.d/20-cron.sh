@@ -19,6 +19,12 @@ ERROR: '/config' directory must be mounted
 "
 	exit 1
 fi
+if [ ! -d /output ]; then
+	echo "
+ERROR: '/output' directory must be mounted
+"
+	exit 1
+fi
 
 # Set up the cron schedule.
 echo "

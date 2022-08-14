@@ -19,15 +19,14 @@ echo "INFO: Syncing from bucket s3://${BUCKET}"
 aws s3 sync s3://${BUCKET} /logs
 
 echo "INFO: Combining log files..."
-rm -f /logs/combined.log.gz
-cat /logs/*.gz > /logs/combined.log.gz
-gzip -f -d /logs/combined.log.gz
-
-sed -i.orig '/^#/d' /logs/combined.log  # remove comments
-rm -f /logs/combined.log.orig
+rm -f /tmp/combined.log
+for f in /logs/*.gz
+do
+  zcat "$f" | grep -v "^#" | awk 'BEGIN{FS="\t"; OFS="\t" } { print $1 " " $2, $4, $5, $6, $8, $9, $10, $11 }' >> /tmp/combined.log; 
+done
 
 echo "INFO: Generating analytics html from combined log file."
-eval goaccess --log-format CLOUDFRONT -o /config/html/${HTML_FILENAME:-index}.html ${GOACCESS_ARGS} /logs/combined.log
+eval awstats_buildstaticpages.pl -config=site -update -dir=/output/ ${AWSTATS_ARGS}
 
 case "$POST_ACTION" in
   "" )
