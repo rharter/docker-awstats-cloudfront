@@ -28,6 +28,10 @@ done
 echo "INFO: Generating analytics html from combined log file."
 eval awstats_buildstaticpages.pl -config=site -update -dir=/output/ ${AWSTATS_ARGS}
 
+output_prefix=${HTML_FILENAME:-index}
+echo "INFO: Renaming generated html file to ${output_prefix}.html."
+mv /output/awstats.site.html "/output/${output_prefix}.html"
+
 case "$POST_ACTION" in
   "" )
     ;;
@@ -35,10 +39,10 @@ case "$POST_ACTION" in
   * )
     if [ -f "./${POST_ACTION}" ] && [ -x "./${POST_ACTION}" ]; then
       echo "INFO: Executing post action script: ./${POST_ACTION}"
-      sh -c "./${POST_ACTION} /config/html/${HTML_FILENAME:-index}.html"
+      sh -c "./${POST_ACTION} /config/html/${output_prefix}.html"
     elif [ -f "/config/${POST_ACTION}" ] && [ -x "/config/${POST_ACTION}" ]; then
       echo "INFO: Executing post action script: /config/${POST_ACTION}"
-      sh -c "/config/${POST_ACTION} /config/html/${HTML_FILENAME:-index}.html"
+      sh -c "/config/${POST_ACTION} /config/html/${output_prefix}.html"
     else
       echo "INFO: Executing post action: ${POST_ACTION}"
       eval "${POST_ACTION}"
