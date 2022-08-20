@@ -24,14 +24,19 @@ ENV \
 
 RUN apk add --force-refresh \
       nginx \
+      make \
+      wget \
       aws-cli \
       curl \
       perl \
+      perl-app-cpanminus \
       awstats \
+    && cpanm Geo::IP \
+    && cpanm Geo::IP::PurePerl \
     && rm -rf /var/cache/* \
     && mkdir /var/cache/apk
 
-COPY --from=build /usr/local/share/perl5/site_perl /usr/local/share/perl5/site_perl
+# COPY --from=build /usr/local/share/perl5/site_perl /usr/local/share/perl5/site_perl
 COPY --from=build /usr/share/zoneinfo /usr/share/zoneinfo
 
 COPY root/ /
